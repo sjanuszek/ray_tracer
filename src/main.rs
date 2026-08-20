@@ -3,14 +3,15 @@ mod color;
 mod ray;
 mod geometry;
 mod utility;
+mod interval;
 
 use std::{io::{self, Write}};
 
-use crate::{color::{Color, write_color}, geometry::{hittable::{HitRecord, Hittable}, hittable_list::HittableList, sphere::Sphere}, ray::Ray, vec3::{Point3, Vec3, dot, unit_vector}};
+use crate::{color::{Color, write_color}, geometry::{hittable::{HitRecord, Hittable}, hittable_list::HittableList, sphere::Sphere}, interval::Interval, ray::Ray, utility::INFINITY, vec3::{Point3, Vec3, unit_vector}};
 
 fn ray_color<T: Hittable>(r: &Ray, world: &T) -> Color {
     let mut rec = HitRecord::default();
-    if world.hit(r, 0., utility::INFINITY, &mut rec) {
+    if world.hit(r, Interval::new(0., INFINITY), &mut rec) {
         return 0.5 * (rec.normal + Color::new(1., 1., 1.));
     }
 

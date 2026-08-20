@@ -1,4 +1,4 @@
-use crate::{geometry::hittable::Hittable, vec3::{Point3, dot}};
+use crate::{geometry::hittable::Hittable, interval::Interval, vec3::{Point3, dot}};
 
 pub struct Sphere {
     center: Point3,
@@ -15,7 +15,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &crate::ray::Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut super::hittable::HitRecord) -> bool {
+    fn hit(&self, r: &crate::ray::Ray, ray_t: Interval, rec: &mut super::hittable::HitRecord) -> bool {
         
         let oc = self.center - *r.origin();
         let a = r.direction().length_squared();
@@ -30,9 +30,9 @@ impl Hittable for Sphere {
         let sqrtd = discriminant.sqrt();
 
         let mut root = (h - sqrtd) / a;
-        if root <= ray_tmin || ray_tmax <= root {
+        if !ray_t.surrounds(root) {
             root = (h + sqrtd) / a;
-            if root <= ray_tmin || ray_tmax <= root {
+            if !ray_t.surrounds(root) {
                 return false;
             }
         }

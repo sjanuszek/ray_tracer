@@ -1,4 +1,4 @@
-use crate::geometry::hittable::{HitRecord, Hittable};
+use crate::{geometry::hittable::{HitRecord, Hittable}, interval::Interval};
 
 pub struct HittableList<T: Hittable> {
     pub objects: Vec<T>
@@ -21,13 +21,13 @@ impl <T: Hittable>HittableList<T> {
 }
 
 impl <T: Hittable>Hittable for HittableList<T> {
-    fn hit(&self, r: &crate::ray::Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut super::hittable::HitRecord) -> bool {
+    fn hit(&self, r: &crate::ray::Ray, ray_t: Interval, rec: &mut super::hittable::HitRecord) -> bool {
         let mut temp_rec = HitRecord::default();
         let mut hit_anything = false;
-        let mut closest_so_far = ray_tmax;
+        let mut closest_so_far = ray_t.max;
 
         for object in &self.objects {
-            if object.hit(r, ray_tmin, closest_so_far, &mut temp_rec) {
+            if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
 
