@@ -1,31 +1,19 @@
 mod vec3;
 mod color;
 mod ray;
+mod geometry;
+mod utility;
 
-use std::io::{self, Write};
+use std::{io::{self, Write}};
 
-use crate::{color::{Color, write_color}, ray::Ray, vec3::{Point3, Vec3, dot, unit_vector}};
+use crate::{color::{Color, write_color}, geometry::{hittable::{HitRecord, Hittable}, hittable_list::HittableList, sphere::Sphere}, ray::Ray, vec3::{Point3, Vec3, dot, unit_vector}};
 
-fn hit_sphere(center: Point3, radius: f64, r: &Ray) -> f64 {
-    let oc = center - *r.origin();
-    let a = r.direction().length_squared();
-    let h = dot(*r.direction(), oc);
-    let c = oc.length_squared() - radius*radius;
-    let discriminant = h*h - a*c;
-
-    if discriminant < 0. {
-        return -1.0;
-    } else {
-        return (h- discriminant.sqrt()) / a;
+fn ray_color<T: Hittable>(r: &Ray, world: &T) -> Color {
+    let mut rec = HitRecord::default();
+    if world.hit(r, 0., utility::INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + Color::new(1., 1., 1.));
     }
-}
 
-fn ray_color(r: Ray) -> Color {
-    let t = hit_sphere(Point3::new(0., 0., -1.), 0.5, &r);
-    if t > 0. {
-        let n = unit_vector(r.at(t) - Vec3::new(0., 0., -1.));
-        return 0.5 * Color::new(n.x()+1., n.y()+1., n.z()+1.);
-    }
     let unit_direction = unit_vector(*r.direction());
     let a = 0.5*(unit_direction.y() + 1.);
     (1.-a)*Color::new(1., 1., 1.) + a*Color::new(0.5, 0.7, 1.)
@@ -37,6 +25,11 @@ fn main() {
 
     let mut image_height = (image_width as f64 / aspect_ratio) as u64;
     image_height = if image_height < 1 { 1 } else { image_height };
+
+    let mut world = HittableList::new();
+
+    world.add(Sphere::new(Point3::new(0., 0., -1.), 0.5));
+    world.add(Sphere::new(Point3::new(0., -100.5, -1.), 100.));
 
     let focal_length = 1.;
     let viewport_height = 2.;
@@ -61,7 +54,7 @@ fn main() {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(&camera_center, &ray_direction);
 
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&mut io::stdout(), pixel_color).unwrap();
         }
     }
