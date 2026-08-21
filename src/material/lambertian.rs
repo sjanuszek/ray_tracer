@@ -5,9 +5,9 @@ pub struct Lambertian {
 }
 
 impl Lambertian {
-    pub fn new(albedo: &Color) -> Self {
+    pub fn new(albedo: Color) -> Self {
         Self {
-            albedo: *albedo
+            albedo
         }
     }
 }
@@ -20,6 +20,6 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        Some((self.albedo, Ray::new(&rec.p, &scatter_direction)))
+        Some((self.albedo, Ray::new(rec.p, scatter_direction)))
     }
 }
