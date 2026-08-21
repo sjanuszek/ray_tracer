@@ -1,4 +1,4 @@
-use crate::{color::Color, material::material::Material, ray::Ray, vec3::{Vec3, dot, reflect, refract, unit_vector}};
+use crate::{color::Color, material::material::Material, ray::Ray, utility::random_double, vec3::{Vec3, dot, reflect, refract, unit_vector}};
 
 pub struct Dielectric {
     refraction_index: f64
@@ -9,6 +9,11 @@ impl Dielectric {
         Self {
             refraction_index
         }
+    }
+
+    fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+        let r0 = ((1. - refraction_index) / (1. + refraction_index)).powi(2);
+        r0 + (1. -r0 ) * (1. - cosine).powi(5)
     }
 }
 
@@ -23,7 +28,7 @@ impl Material for Dielectric {
         let cannot_refract = ri * sin_theta > 1.;
         let direction: Vec3;
 
-        if cannot_refract {
+        if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double() {
             direction = reflect(&unit_direction, &rec.normal);
         } else {
             direction = refract(&unit_direction, &rec.normal, ri);
