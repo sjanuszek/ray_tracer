@@ -9,7 +9,7 @@ mod material;
 
 use std::sync::Arc;
 
-use crate::{camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal}, vec3::Point3};
+use crate::{camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal}, vec3::{Point3, Vec3}};
 
 fn main() {
     let mut world: HittableList = HittableList::new();
@@ -32,7 +32,11 @@ fn main() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    
     cam.vfov = 90.;
+    cam.lookfrom = Point3::new(-2., 2., 1.);
+    cam.lookat = Point3::new(0., 0., -1.);
+    cam.vup = Vec3::new(0., 1., 0.);
 
     cam.jobs = 8;
 
