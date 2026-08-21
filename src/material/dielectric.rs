@@ -1,4 +1,4 @@
-use crate::{color::Color, material::material::Material, ray::Ray, vec3::{refract, unit_vector}};
+use crate::{color::Color, material::material::Material, ray::Ray, vec3::{Vec3, dot, reflect, refract, unit_vector}};
 
 pub struct Dielectric {
     refraction_index: f64
@@ -17,8 +17,18 @@ impl Material for Dielectric {
         let ri = if rec.front_face { 1./self.refraction_index } else { self.refraction_index };
 
         let unit_direction = unit_vector(*r_in.direction());
-        let refracted = refract(&unit_direction, &rec.normal, ri);
+        let cos_theta = dot(-unit_direction, rec.normal).min(1.);
+        let sin_theta = (1. - cos_theta*cos_theta).sqrt();
 
-        Some((Color::new(1., 1., 1.), Ray::new(rec.p, refracted)))
+        let cannot_refract = ri * sin_theta > 1.;
+        let direction: Vec3;
+
+        if cannot_refract {
+            direction = reflect(&unit_direction, &rec.normal);
+        } else {
+            direction = refract(&unit_direction, &rec.normal, ri);
+        }
+
+        Some((Color::new(1., 1., 1.), Ray::new(rec.p, direction)))
     }
 }
