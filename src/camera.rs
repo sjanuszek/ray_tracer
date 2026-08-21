@@ -2,7 +2,7 @@ use std::{io::{self, Write}, sync::atomic::{AtomicU64, Ordering}};
 
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, random_double}, vec3::{Point3, Vec3, random_on_hemisphere, random_unit_vector, unit_vector}};
+use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, degrees_to_radians, random_double}, vec3::{Point3, Vec3, random_on_hemisphere, random_unit_vector, unit_vector}};
 
 #[derive(Default)]
 pub struct Camera {
@@ -10,6 +10,8 @@ pub struct Camera {
     pub image_width: u64,
     pub samples_per_pixel: u64,
     pub max_depth: u64,
+    pub vfov: f64,
+
     pub jobs: usize,
 
     image_height: u64,
@@ -68,7 +70,9 @@ impl Camera {
         self.center = Point3::new(0., 0., 0.);
 
         let focal_length = 1.;
-        let viewport_height = 2.;
+        let theta = degrees_to_radians(self.vfov);
+        let h = f64::tan(theta/2.);
+        let viewport_height = 2. * h * focal_length;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
         let viewport_u = Vec3::new(viewport_width, 0., 0.);
         let viewport_v = Vec3::new(0., -viewport_height, 0.);
