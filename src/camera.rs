@@ -7,6 +7,7 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: u64,
     pub samples_per_pixel: u64,
+    pub max_depth: u64,
 
     image_height: u64,
     pixel_samples_scale: f64,
@@ -28,7 +29,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0., 0., 0.);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, world);
+                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
                 }
                 write_color(&mut io::stdout(), pixel_color * self.pixel_samples_scale).unwrap();
             }
@@ -74,11 +75,16 @@ impl Camera {
         Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.)
     }
 
-    fn ray_color(r: &Ray, world: &impl Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: u64, world: &impl Hittable) -> Color {
+        if depth <= 0 {
+            return Color::new(0., 0., 0.);
+        }
+
         let mut rec = HitRecord::default();
+
         if world.hit(r, Interval::new(0., INFINITY), &mut rec) {
             let direction = random_on_hemisphere(&rec.normal);
-            return 0.5 * Camera::ray_color(&Ray::new(&rec.p, &direction), world);
+            return 0.5 * Camera::ray_color(&Ray::new(&rec.p, &direction), depth-1, world);
         }
 
         let unit_direction = unit_vector(*r.direction());
