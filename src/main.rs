@@ -30,6 +30,7 @@ fn main() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    cam.jobs = 8;
 
     cam.render(&world);
 }

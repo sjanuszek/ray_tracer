@@ -1,4 +1,6 @@
-use std::io::{self, Write};
+use std::{io::{self, Write}, sync::atomic::{AtomicU64, Ordering}};
+
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, random_double}, vec3::{Point3, Vec3, random_on_hemisphere, random_unit_vector, unit_vector}};
 
@@ -8,6 +10,7 @@ pub struct Camera {
     pub image_width: u64,
     pub samples_per_pixel: u64,
     pub max_depth: u64,
+    pub jobs: usize,
 
     image_height: u64,
     pixel_samples_scale: f64,
@@ -18,24 +21,42 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn render(&mut self, world: &impl Hittable) {
+    pub fn render(&mut self, world: &(impl Hittable + Sync)) {
         self.initialize();
 
-        write!(io::stdout(), "P3\n {} {}\n255\n", self.image_width, self.image_height).unwrap();
-        for j in 0..self.image_height {
-            write!(io::stderr(), "\rScanlines remaining: {}", self.image_height - j).unwrap();
-            io::stderr().flush().unwrap();
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::new(0., 0., 0.);
-                for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
+        let this = &*self;
+
+        let scanlines_remaining = AtomicU64::new(this.image_height);
+
+        let image_buffer: Vec<Color> = (0..this.image_height)
+            .into_par_iter()
+            .flat_map(|j| {
+                let remaining = scanlines_remaining.fetch_sub(1, Ordering::Relaxed) - 1;
+                
+                if remaining % 10 == 0 || remaining == 0 {
+                    eprint!("\rScanlines remaining: {:4} ", remaining);
                 }
-                write_color(&mut io::stdout(), pixel_color * self.pixel_samples_scale).unwrap();
-            }
-        }
+
+                (0..this.image_width).into_par_iter().map(move |i| this.render_pixel(i, j, world))
+            })
+            .collect();
 
         write!(io::stderr(), "\rDone.               \n").unwrap();
+
+        let mut stdout = io::stdout().lock();
+        write!(io::stdout(), "P3\n {} {}\n255\n", self.image_width, self.image_height).unwrap();
+        for color in image_buffer {
+            write_color(&mut stdout, color).unwrap();
+        }
+    }
+
+    fn render_pixel(&self, i: u64, j: u64, world: &impl Hittable) -> Color {
+        let mut pixel_color = Color::new(0., 0., 0.);
+        for _ in 0..self.samples_per_pixel {
+            let r = self.get_ray(i, j);
+            pixel_color += Camera::ray_color(&r, self.max_depth, world);
+        }
+        pixel_color * self.pixel_samples_scale
     }
 
     fn initialize(&mut self) {
