@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, random_double}, vec3::{Point3, Vec3, unit_vector}};
+use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, random_double}, vec3::{Point3, Vec3, random_on_hemisphere, unit_vector}};
 
 #[derive(Default)]
 pub struct Camera {
@@ -77,7 +77,8 @@ impl Camera {
     fn ray_color(r: &Ray, world: &impl Hittable) -> Color {
         let mut rec = HitRecord::default();
         if world.hit(r, Interval::new(0., INFINITY), &mut rec) {
-            return 0.5 * (rec.normal + Color::new(1., 1., 1.));
+            let direction = random_on_hemisphere(&rec.normal);
+            return 0.5 * Camera::ray_color(&Ray::new(&rec.p, &direction), world);
         }
 
         let unit_direction = unit_vector(*r.direction());
