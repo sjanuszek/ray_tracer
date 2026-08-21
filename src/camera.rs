@@ -40,7 +40,7 @@ impl Camera {
 
     fn initialize(&mut self) {
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u64;
-        self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
+        self.image_height = self.image_height.max(1);
 
         self.pixel_samples_scale = 1. / self.samples_per_pixel as f64;
 
