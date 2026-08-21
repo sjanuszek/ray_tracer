@@ -33,10 +33,13 @@ fn main() {
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     
-    cam.vfov = 90.;
+    cam.vfov = 20.;
     cam.lookfrom = Point3::new(-2., 2., 1.);
     cam.lookat = Point3::new(0., 0., -1.);
     cam.vup = Vec3::new(0., 1., 0.);
+
+    cam.defocus_angle = 10.;
+    cam.focus_dist = 3.4;
 
     cam.jobs = 8;
 
