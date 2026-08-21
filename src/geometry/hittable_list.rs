@@ -30,12 +30,7 @@ impl Hittable for HittableList {
             if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-
-                // this is bad
-                rec.normal = temp_rec.normal;
-                rec.t = temp_rec.t;
-                rec.front_face = temp_rec.front_face;
-                rec.p = temp_rec.p;
+                *rec = temp_rec.clone();
             }
         }
         return hit_anything;

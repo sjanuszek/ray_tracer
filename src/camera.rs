@@ -83,8 +83,12 @@ impl Camera {
         let mut rec = HitRecord::default();
 
         if world.hit(r, Interval::new(0.01, INFINITY), &mut rec) {
-            let direction = rec.normal + random_unit_vector();
-            return 0.5 * Camera::ray_color(&Ray::new(&rec.p, &direction), depth-1, world);
+            if let Some(mat) = &rec.mat {
+                if let Some((attenuation, scattered)) = mat.scatter(r, &rec) {
+                    return attenuation * Camera::ray_color(&scattered, depth-1, world);
+                }
+                return Color::new(0., 0., 0.);
+            }
         }
 
         let unit_direction = unit_vector(*r.direction());
