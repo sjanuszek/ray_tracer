@@ -9,37 +9,62 @@ mod material;
 
 use std::sync::Arc;
 
-use crate::{camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal}, vec3::{Point3, Vec3}};
+use crate::{camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn main() {
     let mut world: HittableList = HittableList::new();
 
-    let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.)));
-    let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let material_left =   Arc::new(Dielectric::new(1.5));
-    let material_bubble = Arc::new(Dielectric::new(1. / 1.5));
-    let material_right =  Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.));
+    let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., ground_material));
 
-    world.add(Sphere::new(Point3::new(0., -100.5, -1.), 100., material_ground));
-    world.add(Sphere::new(Point3::new(0., 0., -1.2), 0.5, material_center));
-    world.add(Sphere::new(Point3::new(-1., 0., -1.), 0.5, material_left));
-    world.add(Sphere::new(Point3::new(-1., 0., -1.), 0.4, material_bubble));
-    world.add(Sphere::new(Point3::new(1., 0., -1.), 0.5, material_right));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random_double();
+            let center = Point3::new(a as f64 + 0.9*random_double(), random_double_range(0.2, 2.3), b as f64 + 0.9 * random_double());
+
+            if (center - Point3::new(4., 0.2, 0.)).length() > 0.9 {
+                let sphere_material: Arc<dyn Material>;
+
+                if choose_mat < 0.8 {
+                    let albedo = Color::random() * Color::random();
+                    sphere_material = Arc::new(Lambertian::new(albedo));
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                } else if choose_mat < 0.95 {
+                    let albedo = Color::random_range(0.5, 1.);
+                    let fuzz = random_double_range(0., 0.5);
+                    sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                } else {
+                    sphere_material = Arc::new(Dielectric::new(1.5));
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    let material1 = Arc::new(Dielectric::new(1.5));
+    world.add(Sphere::new(Point3::new(0., 1., 0.), 1., material1));
+
+    let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    world.add(Sphere::new(Point3::new(-4., 1., 0.), 1., material2));
+
+    let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.));
+    world.add(Sphere::new(Point3::new(4., 1., 0.), 1., material3));
 
     let mut cam = Camera::default();
 
     cam.aspect_ratio = 16. / 9.;
-    cam.image_width = 400;
+    cam.image_width = 1000;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     
     cam.vfov = 20.;
-    cam.lookfrom = Point3::new(-2., 2., 1.);
-    cam.lookat = Point3::new(0., 0., -1.);
+    cam.lookfrom = Point3::new(13., 2., 3.);
+    cam.lookat = Point3::new(0., 0., 0.);
     cam.vup = Vec3::new(0., 1., 0.);
 
-    cam.defocus_angle = 10.;
-    cam.focus_dist = 3.4;
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 10.;
 
     cam.jobs = 8;
 
