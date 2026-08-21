@@ -6,9 +6,7 @@ mod utility;
 mod interval;
 mod camera;
 
-use std::{io::{self, Write}};
-
-use crate::{camera::Camera, color::{Color, write_color}, geometry::{hittable::{HitRecord, Hittable}, hittable_list::HittableList, sphere::Sphere}, interval::Interval, ray::Ray, utility::INFINITY, vec3::{Point3, Vec3, unit_vector}};
+use crate::{camera::Camera, geometry::{hittable_list::HittableList, sphere::Sphere}, vec3::Point3};
 
 fn main() {
     let mut world: HittableList = HittableList::new();
