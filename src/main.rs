@@ -6,6 +6,7 @@ mod utility;
 mod interval;
 mod camera;
 mod material;
+mod aabb;
 
 use std::sync::Arc;
 
