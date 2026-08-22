@@ -20,6 +20,6 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        Some((self.albedo, Ray::new(rec.p, scatter_direction)))
+        Some((self.albedo, Ray::new_with_time(rec.p, scatter_direction, r_in.time())))
     }
 }

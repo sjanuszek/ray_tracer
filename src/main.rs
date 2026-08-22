@@ -28,7 +28,8 @@ fn main() {
                 if choose_mat < 0.8 {
                     let albedo = Color::random() * Color::random();
                     sphere_material = Arc::new(Lambertian::new(albedo));
-                    world.add(Sphere::new(center, 0.2, sphere_material));
+                    let center2 = center + Vec3::new(0., random_double_range(0., 0.5), 0.);
+                    world.add(Sphere::new_moving(center, center2, 0.2, sphere_material));
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random_range(0.5, 1.);
                     let fuzz = random_double_range(0., 0.5);
@@ -54,7 +55,7 @@ fn main() {
     let mut cam = Camera::default();
 
     cam.aspect_ratio = 16. / 9.;
-    cam.image_width = 1000;
+    cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     

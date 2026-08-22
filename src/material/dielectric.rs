@@ -34,6 +34,6 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, &rec.normal, ri);
         }
 
-        Some((Color::new(1., 1., 1.), Ray::new(rec.p, direction)))
+        Some((Color::new(1., 1., 1.), Ray::new_with_time(rec.p, direction, r_in.time())))
     }
 }
