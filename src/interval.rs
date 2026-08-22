@@ -1,5 +1,6 @@
 use crate::utility::INFINITY;
 
+#[derive(Clone, Copy)]
 pub struct Interval {
     pub min: f64,
     pub max: f64
@@ -19,6 +20,13 @@ impl Interval {
         Self {
             min,
             max
+        }
+    }
+
+    pub fn new_from_intervals(a: Interval, b: Interval) -> Self {
+        Self {
+            min: a.min.min(b.min),
+            max: a.max.max(b.max)
         }
     }
 

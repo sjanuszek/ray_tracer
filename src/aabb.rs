@@ -24,6 +24,14 @@ impl AABB {
         }
     }
 
+    pub fn new_from_boxes(box0: &AABB, box1: &AABB) -> Self {
+        Self {
+            x: Interval::new_from_intervals(box0.x, box1.x),
+            y: Interval::new_from_intervals(box0.y, box1.y),
+            z: Interval::new_from_intervals(box0.z, box1.z),
+        }
+    }
+
     pub fn axis_interval(&self, n: usize) -> &Interval {
         match n {
             1 => &self.y,

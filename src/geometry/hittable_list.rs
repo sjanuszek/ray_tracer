@@ -1,13 +1,15 @@
-use crate::{geometry::hittable::{HitRecord, Hittable}, interval::Interval};
+use crate::{aabb::AABB, geometry::hittable::{HitRecord, Hittable}, interval::Interval};
 
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable>>
+    pub objects: Vec<Box<dyn Hittable>>,
+    bbox: AABB
 }
 
 impl HittableList {
     pub fn new() -> Self {
         Self {
-            objects: vec![]
+            objects: vec![],
+            bbox: AABB::default()
         }
     }
 
@@ -16,6 +18,7 @@ impl HittableList {
     }
 
     pub fn add(&mut self, object: impl Hittable + 'static) {
+        self.bbox = AABB::new_from_boxes(&self.bbox, object.bounding_box());
         self.objects.push(Box::new(object));
     }
 }
@@ -34,5 +37,9 @@ impl Hittable for HittableList {
             }
         }
         return hit_anything;
+    }
+
+    fn bounding_box(&self) -> &AABB {
+        &self.bbox
     }
 }

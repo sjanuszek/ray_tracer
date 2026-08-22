@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{interval::Interval, material::material::Material, ray::Ray, vec3::{Point3, Vec3, dot}};
+use crate::{aabb::AABB, interval::Interval, material::material::Material, ray::Ray, vec3::{Point3, Vec3, dot}};
 
 #[derive(Default, Clone)]
 pub struct HitRecord {
@@ -20,4 +20,6 @@ impl HitRecord {
 
 pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool;
+
+    fn bounding_box(&self) -> &AABB;
 }
