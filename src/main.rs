@@ -7,10 +7,11 @@ mod interval;
 mod camera;
 mod material;
 mod aabb;
+mod bvh_node;
 
 use std::sync::Arc;
 
-use crate::{camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
+use crate::{bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn main() {
     let mut world: HittableList = HittableList::new();
@@ -55,8 +56,10 @@ fn main() {
 
     let mut cam = Camera::default();
 
+    world = HittableList::new_from_hittable(BVHNode::new(&mut world));
+
     cam.aspect_ratio = 16. / 9.;
-    cam.image_width = 400;
+    cam.image_width = 1920;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     

@@ -1,6 +1,6 @@
 use crate::{interval::Interval, ray::Ray, vec3::Point3};
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct AABB {
     pub x: Interval,
     pub y: Interval,
@@ -32,6 +32,14 @@ impl AABB {
         }
     }
 
+    pub fn empty() -> Self {
+        Self {
+            x: Interval::empty(),
+            y: Interval::empty(),
+            z: Interval::empty(),
+        }
+    }
+
     pub fn axis_interval(&self, n: usize) -> &Interval {
         match n {
             1 => &self.y,
@@ -53,7 +61,7 @@ impl AABB {
 
             if t0 < t1 {
                 if t0 > ray_t.min { ray_t.min = t0 }
-                if t1 < ray_t.max { ray_t.min = t1 }
+                if t1 < ray_t.max { ray_t.max = t1 }
             } else {
                 if t1 > ray_t.min { ray_t.min = t1 }
                 if t0 < ray_t.max { ray_t.max = t0 }
@@ -64,5 +72,13 @@ impl AABB {
             }
         }
         true
+    }
+
+    pub fn longest_axis(&self) -> usize {
+        if self.x.size() > self.y.size() {
+            return if self.x.size() > self.z.size() { 0 } else { 2 };
+        } else {
+            return if self.y.size() > self.z.size() { 1 } else { 2 };
+        }
     }
 }
