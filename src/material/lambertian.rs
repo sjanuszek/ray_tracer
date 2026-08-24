@@ -1,13 +1,17 @@
-use crate::{color::Color, material::material::Material, ray::Ray, vec3::random_unit_vector};
+use crate::{color::Color, mapping::{solid_color::SolidColor, texture::Texture}, material::material::Material, ray::Ray, vec3::random_unit_vector};
 
 pub struct Lambertian {
-    albedo: Color
+    tex: Box<dyn Texture>
 }
 
 impl Lambertian {
-    pub fn new(albedo: Color) -> Self {
+    pub fn new_from_color(albedo: Color) -> Self {
+        Self::new_from_texture(Box::new(SolidColor::new_from_color(albedo)))
+    }
+
+    pub fn new_from_texture(tex: Box<dyn Texture>) -> Self {
         Self {
-            albedo
+            tex
         }
     }
 }
@@ -20,6 +24,6 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        Some((self.albedo, Ray::new_with_time(rec.p, scatter_direction, r_in.time())))
+        Some((self.tex.value(rec.u, rec.v, rec.p), Ray::new_with_time(rec.p, scatter_direction, r_in.time())))
     }
 }
