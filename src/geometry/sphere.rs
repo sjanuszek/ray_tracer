@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{aabb::AABB, geometry::hittable::Hittable, interval::Interval, material::material::Material, ray::Ray, vec3::{Point3, Vec3, dot}};
+use crate::{bvh::aabb::AABB, geometry::hittable::Hittable, interval::Interval, material::material::Material, ray::Ray, vec3::{Point3, Vec3, dot}};
 
 pub struct Sphere {
     center: Ray,
@@ -66,7 +66,7 @@ impl Hittable for Sphere {
         return true;
     }
 
-    fn bounding_box(&self) -> &crate::aabb::AABB {
+    fn bounding_box(&self) -> &AABB {
         &self.bbox
     }
 } 

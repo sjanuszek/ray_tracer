@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{aabb::AABB, geometry::hittable::{HitRecord, Hittable}, interval::Interval};
+use crate::{bvh::aabb::AABB, geometry::hittable::{HitRecord, Hittable}, interval::Interval};
 
 pub struct HittableList {
     pub objects: Vec<Arc<dyn Hittable>>,

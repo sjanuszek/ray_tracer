@@ -6,12 +6,12 @@ mod utility;
 mod interval;
 mod camera;
 mod material;
-mod aabb;
-mod bvh_node;
+mod mapping;
+mod bvh;
 
 use std::sync::Arc;
 
-use crate::{bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
+use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn main() {
     let mut world: HittableList = HittableList::new();

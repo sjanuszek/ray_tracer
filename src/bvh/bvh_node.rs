@@ -1,11 +1,11 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use crate::{aabb::AABB, geometry::{hittable::Hittable, hittable_list::HittableList}, interval::Interval, utility::random_int};
+use crate::{bvh::aabb::AABB, geometry::{hittable::Hittable, hittable_list::HittableList}, interval::Interval};
 
 pub struct BVHNode {
     left: Arc<dyn Hittable>,
     right: Arc<dyn Hittable>,
-    bbox: AABB
+    bbox: AABB 
 }
 
 impl BVHNode {
