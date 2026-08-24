@@ -1,15 +1,17 @@
+use std::sync::Arc;
+
 use crate::{color::Color, mapping::{solid_color::SolidColor, texture::Texture}, material::material::Material, ray::Ray, vec3::random_unit_vector};
 
 pub struct Lambertian {
-    tex: Box<dyn Texture>
+    tex: Arc<dyn Texture>
 }
 
 impl Lambertian {
     pub fn new_from_color(albedo: Color) -> Self {
-        Self::new_from_texture(Box::new(SolidColor::new_from_color(albedo)))
+        Self::new_from_texture(Arc::new(SolidColor::new_from_color(albedo)))
     }
 
-    pub fn new_from_texture(tex: Box<dyn Texture>) -> Self {
+    pub fn new_from_texture(tex: Arc<dyn Texture>) -> Self {
         Self {
             tex
         }

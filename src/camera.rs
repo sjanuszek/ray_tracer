@@ -1,4 +1,4 @@
-use std::{io::{self, Write}, sync::atomic::{AtomicU64, Ordering}};
+use std::{io::{self, Write}, sync::atomic::{AtomicU64, AtomicUsize, Ordering}};
 
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -7,9 +7,9 @@ use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittabl
 #[derive(Default)]
 pub struct Camera {
     pub aspect_ratio: f64,
-    pub image_width: u64,
-    pub samples_per_pixel: u64,
-    pub max_depth: u64,
+    pub image_width: usize,
+    pub samples_per_pixel: usize,
+    pub max_depth: usize,
 
     pub vfov: f64,
     pub lookfrom: Point3,
@@ -21,7 +21,7 @@ pub struct Camera {
 
     pub jobs: usize,
 
-    image_height: u64,
+    image_height: usize,
     pixel_samples_scale: f64,
     center: Point3,
     pixel00_loc: Point3,
@@ -40,7 +40,7 @@ impl Camera {
 
         let this = &*self;
 
-        let scanlines_remaining = AtomicU64::new(this.image_height);
+        let scanlines_remaining = AtomicUsize::new(this.image_height);
 
         let image_buffer: Vec<Color> = (0..this.image_height)
             .into_par_iter()
@@ -64,7 +64,7 @@ impl Camera {
         }
     }
 
-    fn render_pixel(&self, i: u64, j: u64, world: &impl Hittable) -> Color {
+    fn render_pixel(&self, i: usize, j: usize, world: &impl Hittable) -> Color {
         let mut pixel_color = Color::new(0., 0., 0.);
         for _ in 0..self.samples_per_pixel {
             let r = self.get_ray(i, j);
@@ -74,7 +74,7 @@ impl Camera {
     }
 
     fn initialize(&mut self) {
-        self.image_height = (self.image_width as f64 / self.aspect_ratio) as u64;
+        self.image_height = (self.image_width as f64 / self.aspect_ratio) as usize;
         self.image_height = self.image_height.max(1);
 
         self.pixel_samples_scale = 1. / self.samples_per_pixel as f64;
@@ -104,7 +104,7 @@ impl Camera {
         self.defocus_disk_v = self.v * defocus_radius;
     }
 
-    fn get_ray(&self, i: u64, j: u64) -> Ray {
+    fn get_ray(&self, i: usize, j: usize) -> Ray {
         let offset = Camera::sample_square();
         let pixel_sample = self.pixel00_loc
                          + ((i as f64 + offset.x()) * self.pixel_delta_u)
@@ -126,7 +126,7 @@ impl Camera {
         self.center + (p[0] * self.defocus_disk_u) + (p[1] * self.defocus_disk_v)
     }
 
-    fn ray_color(r: &Ray, depth: u64, world: &impl Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: usize, world: &impl Hittable) -> Color {
         if depth <= 0 {
             return Color::new(0., 0., 0.);
         }

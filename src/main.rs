@@ -9,15 +9,15 @@ mod material;
 mod mapping;
 mod bvh;
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, mapping::checker_texture::CheckerTexture, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
-fn main() {
+fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let mut world: HittableList = HittableList::new();
 
-    let checkered = CheckerTexture::new_from_color(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., Arc::new(Lambertian::new_from_texture(Box::new(checkered)))));
+    let checkered = Arc::new(CheckerTexture::new_from_color(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)));
+    world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., Arc::new(Lambertian::new_from_texture(checkered))));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -59,9 +59,9 @@ fn main() {
     world = HittableList::new_from_hittable(BVHNode::new(&mut world));
 
     cam.aspect_ratio = 16. / 9.;
-    cam.image_width = 1000;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
+    cam.image_width = image_width;
+    cam.samples_per_pixel = samples;
+    cam.max_depth = max_depth;
     
     cam.vfov = 20.;
     cam.lookfrom = Point3::new(13., 2., 3.);
@@ -74,4 +74,48 @@ fn main() {
     cam.jobs = 8;
 
     cam.render(&world);
+}
+
+fn checkered_spheres(image_width: usize, samples: usize, max_depth: usize) {
+    let mut world: HittableList = HittableList::new();
+
+    let checkered = Arc::new(CheckerTexture::new_from_color(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)));
+
+    world.add(Sphere::new(Point3::new(0., -10., 0.), 10., Arc::new(Lambertian::new_from_texture(checkered.clone()))));
+    world.add(Sphere::new(Point3::new(0., 10., 0.), 10., Arc::new(Lambertian::new_from_texture(checkered))));
+
+    let mut cam = Camera::default();
+
+    world = HittableList::new_from_hittable(BVHNode::new(&mut world));
+
+    cam.aspect_ratio = 16. / 9.;
+    cam.image_width = image_width;
+    cam.samples_per_pixel = samples;
+    cam.max_depth = max_depth;
+    
+    cam.vfov = 20.;
+    cam.lookfrom = Point3::new(13., 2., 3.);
+    cam.lookat = Point3::new(0., 0., 0.);
+    cam.vup = Vec3::new(0., 1., 0.);
+
+    cam.defocus_angle = 0.0;
+    cam.focus_dist = 10.;
+
+    cam.jobs = 8;
+
+    cam.render(&world);
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let scene = &args[1].parse::<usize>().unwrap();
+    let image_width = &args[2].parse::<usize>().unwrap();
+    let samples = &args[3].parse::<usize>().unwrap();
+    let depth = &args[4].parse::<usize>().unwrap();
+
+    match scene {
+        0 => bouncing_spheres(*image_width, *samples, *depth),
+        1 => checkered_spheres(*image_width, *samples, *depth),
+        _ => ()
+    }
 }
