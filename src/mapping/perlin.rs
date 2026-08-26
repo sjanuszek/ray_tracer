@@ -1,11 +1,11 @@
 use rand::seq::SliceRandom;
 
-use crate::{utility::random_double, vec3::Point3};
+use crate::{utility::random_double, vec3::{Point3, Vec3, dot, unit_vector}};
 
 const POINT_COUNT: usize = 256;
 
 pub struct Perlin {
-    randfloat: [f64; POINT_COUNT],
+    randvec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],
     perm_y: [usize; POINT_COUNT],
     perm_z: [usize; POINT_COUNT]
@@ -13,9 +13,9 @@ pub struct Perlin {
 
 impl Perlin {
     pub fn new() -> Self {
-        let mut randfloat = [0.; POINT_COUNT];
-        for float in randfloat.iter_mut() {
-            *float = random_double();
+        let mut randvec = [Vec3::default(); POINT_COUNT];
+        for vec in randvec.iter_mut() {
+            *vec = unit_vector(Vec3::random_range(-1., 1.));
         }
         
         let perm_x = Self::perlin_generate_perm();
@@ -23,7 +23,7 @@ impl Perlin {
         let perm_z = Self::perlin_generate_perm();
 
         Self {
-            randfloat,
+            randvec,
             perm_x,
             perm_y,
             perm_z
@@ -31,23 +31,20 @@ impl Perlin {
     }
 
     pub fn noise(&self, p: &Point3) -> f64 {
-        let mut u = p.x() - p.x().floor();
-        let mut v = p.y() - p.y().floor();
-        let mut w = p.z() - p.z().floor();
-        u = u*u*(3.-2.*u);
-        v = v*v*(3.-2.*v);
-        w = w*w*(3.-2.*w);
+        let u = p.x() - p.x().floor();
+        let v = p.y() - p.y().floor();
+        let w = p.z() - p.z().floor();
 
         let i = p.x().floor() as i32;
         let j = p.y().floor() as i32;
         let k = p.z().floor() as i32;
 
-        let mut c = [[[0.; 2]; 2]; 2];
+        let mut c = [[[Vec3::default(); 2]; 2]; 2];
 
         for di in 0..2 {
             for dj in 0..2 {
                 for dk in 0..2 {
-                    c[di][dj][dk] = self.randfloat[
+                    c[di][dj][dk] = self.randvec[
                         self.perm_x[((i+di as i32) & 255) as usize] ^
                         self.perm_y[((j+dj as i32) & 255) as usize] ^
                         self.perm_z[((k+dk as i32) & 255) as usize]
@@ -56,21 +53,26 @@ impl Perlin {
             }
         }
 
-        Self::trilinear_interp(c, u, v, w)
+        Self::perlin_interp(c, u, v, w)
     }
 
-    fn trilinear_interp(c: [[[f64; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
+    fn perlin_interp(c: [[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
+        let uu = u*u*(3.-2.*u);
+        let vv = v*v*(3.-2.*v);
+        let ww = w*w*(3.-2.*w);
         let mut accum = 0.;
+
         for i in 0..2 {
             let fi = i as f64;
             for j in 0..2 {
                 let fj = j as f64;
                 for k in 0..2 {
                     let fk = k as f64;
-                    accum += (fi*u + (1.-fi)*(1.-u))
-                           * (fj*v + (1.-fj)*(1.-v))
-                           * (fk*w + (1.-fk)*(1.-w))
-                           * c[i][j][k]
+                    let weight_v = Vec3::new(u-fi, v-fj, w-fk);
+                    accum += (fi*uu + (1.-fi)*(1.-uu))
+                           * (fj*vv + (1.-fj)*(1.-vv))
+                           * (fk*ww + (1.-fk)*(1.-ww))
+                           * dot(c[i][j][k], weight_v)
                 }
             }
         }

@@ -16,6 +16,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, u: f64, v: f64, p: crate::vec3::Point3) -> crate::color::Color {
-        return Color::new(1., 1., 1.) * self.noise.noise(&(self.scale * p));
+        return Color::new(1., 1., 1.) * 0.5 * (1. + self.noise.noise(&(self.scale * p)));
     }
 }
