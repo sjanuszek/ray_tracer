@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{bvh::aabb::AABB, geometry::hittable::Hittable, interval::Interval, material::material::Material, ray::Ray, vec3::{Point3, Vec3, dot}};
+use crate::{bvh::aabb::AABB, geometry::hittable::Hittable, interval::Interval, material::material::Material, ray::Ray, utility::PI, vec3::{Point3, Vec3, dot}};
 
 pub struct Sphere {
     center: Ray,
@@ -32,6 +32,13 @@ impl Sphere {
             bbox: AABB::new_from_boxes(&box1, &box2)
         }
     }
+
+    fn get_sphere_uv(&self, p: &Point3) -> (f64, f64) {
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+
+        return (phi / (2.*PI), theta / PI);
+    }
 }
 
 impl Hittable for Sphere {
@@ -60,6 +67,9 @@ impl Hittable for Sphere {
         rec.t = root;
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - current_center) / self.radius;
+        let (u, v) = self.get_sphere_uv(&outward_normal);
+        rec.u = u;
+        rec.v = v;
         rec.set_face_normal(r, outward_normal);
         rec.mat = Some(self.mat.clone());
 
