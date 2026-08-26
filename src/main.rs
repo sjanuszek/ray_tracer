@@ -141,7 +141,7 @@ fn earth(image_width: usize, samples: usize, max_depth: usize) {
 fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let mut world: HittableList = HittableList::new();
 
-    let pertext = Arc::new(NoiseTexture::new());
+    let pertext = Arc::new(NoiseTexture::new(4.));
     let material = Arc::new(Lambertian::new_from_texture(pertext));
     world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., material.clone()));
     world.add(Sphere::new(Point3::new(0., 2., 0.), 2., material));
