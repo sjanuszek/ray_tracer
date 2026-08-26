@@ -12,7 +12,7 @@ mod rtw_stb_image;
 
 use std::{env, sync::Arc};
 
-use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
+use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture, noise_texture::NoiseTexture}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let mut world: HittableList = HittableList::new();
@@ -138,6 +138,36 @@ fn earth(image_width: usize, samples: usize, max_depth: usize) {
     cam.render(&world);
 }
 
+fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
+    let mut world: HittableList = HittableList::new();
+
+    let pertext = Arc::new(NoiseTexture::new());
+    let material = Arc::new(Lambertian::new_from_texture(pertext));
+    world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., material.clone()));
+    world.add(Sphere::new(Point3::new(0., 2., 0.), 2., material));
+
+    let mut cam = Camera::default();
+
+    world = HittableList::new_from_hittable(BVHNode::new(&mut world));
+
+    cam.aspect_ratio = 16. / 9.;
+    cam.image_width = image_width;
+    cam.samples_per_pixel = samples;
+    cam.max_depth = max_depth;
+    
+    cam.vfov = 20.;
+    cam.lookfrom = Point3::new(13., 2., 3.);
+    cam.lookat = Point3::new(0., 0., 0.);
+    cam.vup = Vec3::new(0., 1., 0.);
+
+    cam.defocus_angle = 0.0;
+    cam.focus_dist = 10.;
+
+    cam.jobs = 8;
+
+    cam.render(&world);
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let scene = &args[1].parse::<usize>().unwrap();
@@ -149,6 +179,7 @@ fn main() {
         0 => bouncing_spheres(*image_width, *samples, *depth),
         1 => checkered_spheres(*image_width, *samples, *depth),
         2 => earth(*image_width, *samples, *depth),
+        3 => perlin_spheres(*image_width, *samples, *depth),
         _ => ()
     }
 }
