@@ -12,7 +12,7 @@ mod rtw_stb_image;
 
 use std::{env, sync::Arc};
 
-use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, quad::Quad, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture, noise_texture::NoiseTexture}, material::{dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
+use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, quad::{self, Quad}, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture, noise_texture::NoiseTexture}, material::{dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let mut world: HittableList = HittableList::new();
@@ -258,7 +258,10 @@ fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
     world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light));
     world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(555., 0., 0.), Vec3::new(0., 0., 555.), white.clone()));
     world.add(Quad::new(Point3::new(555., 555., 555.), Vec3::new(-555., 0., 0.), Vec3::new(0., 0., -555.), white.clone()));
-    world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white));
+    world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white.clone()));
+
+    world.add(quad::quad_box(Point3::new(130., 0., 65.), Point3::new(295., 165., 230.), white.clone()));
+    world.add(quad::quad_box(Point3::new(265., 0., 295.), Point3::new(430., 330., 460.), white));
 
     let mut cam = Camera::default();
 
