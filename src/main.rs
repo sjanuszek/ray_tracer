@@ -12,7 +12,7 @@ mod rtw_stb_image;
 
 use std::{env, sync::Arc};
 
-use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, quad::Quad, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture, noise_texture::NoiseTexture}, material::{dielectric::Dielectric, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
+use crate::{bvh::bvh_node::BVHNode, camera::Camera, color::Color, geometry::{hittable_list::HittableList, quad::Quad, sphere::Sphere}, mapping::{checker_texture::CheckerTexture, image_texture::ImageTexture, noise_texture::NoiseTexture}, material::{dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, material::Material, metal::Metal}, utility::{random_double, random_double_range}, vec3::{Point3, Vec3}};
 
 fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let mut world: HittableList = HittableList::new();
@@ -63,6 +63,7 @@ fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
     cam.image_width = image_width;
     cam.samples_per_pixel = samples;
     cam.max_depth = max_depth;
+    cam.background = Color::new(0.7, 0.8, 1.);
     
     cam.vfov = 20.;
     cam.lookfrom = Point3::new(13., 2., 3.);
@@ -93,6 +94,7 @@ fn checkered_spheres(image_width: usize, samples: usize, max_depth: usize) {
     cam.image_width = image_width;
     cam.samples_per_pixel = samples;
     cam.max_depth = max_depth;
+    cam.background = Color::new(0.7, 0.8, 1.);
     
     cam.vfov = 20.;
     cam.lookfrom = Point3::new(13., 2., 3.);
@@ -124,6 +126,7 @@ fn earth(image_width: usize, samples: usize, max_depth: usize) {
     cam.image_width = image_width;
     cam.samples_per_pixel = samples;
     cam.max_depth = max_depth;
+    cam.background = Color::new(0.7, 0.8, 1.);
     
     cam.vfov = 20.;
     cam.lookfrom = Point3::new(13., 2., 3.);
@@ -154,6 +157,7 @@ fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
     cam.image_width = image_width;
     cam.samples_per_pixel = samples;
     cam.max_depth = max_depth;
+    cam.background = Color::new(0.7, 0.8, 1.);
     
     cam.vfov = 20.;
     cam.lookfrom = Point3::new(13., 2., 3.);
@@ -191,10 +195,46 @@ fn quads(image_width: usize, samples: usize, max_depth: usize) {
     cam.image_width = image_width;
     cam.samples_per_pixel = samples;
     cam.max_depth = max_depth;
+    cam.background = Color::new(0.7, 0.8, 1.);
     
     cam.vfov = 80.;
     cam.lookfrom = Point3::new(0., 0., 9.);
     cam.lookat = Point3::new(0., 0., 0.);
+    cam.vup = Vec3::new(0., 1., 0.);
+
+    cam.defocus_angle = 0.0;
+    cam.focus_dist = 10.;
+
+    cam.jobs = 8;
+
+    cam.render(&world);
+}
+
+fn simple_light(image_width: usize, samples: usize, max_depth: usize) {
+    let mut world: HittableList = HittableList::new();
+
+    let pertext = Arc::new(NoiseTexture::new(4.));
+    let material = Arc::new(Lambertian::new_from_texture(pertext));
+    world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., material.clone()));
+    world.add(Sphere::new(Point3::new(0., 2., 0.), 2., material));
+
+    let difflight = Arc::new(DiffuseLight::new_from_color(Color::new(4., 4., 4.)));
+    world.add(Sphere::new(Point3::new(0., 7., 0.), 2., difflight.clone()));
+    world.add(Quad::new(Point3::new(3., 1., -2.), Vec3::new(2., 0., 0.), Vec3::new(0., 2., 0.), difflight));
+
+    let mut cam = Camera::default();
+
+    world = HittableList::new_from_hittable(BVHNode::new(&mut world));
+
+    cam.aspect_ratio = 16. / 9.;
+    cam.image_width = image_width;
+    cam.samples_per_pixel = samples;
+    cam.max_depth = max_depth;
+    cam.background = Color::new(0., 0., 0.);
+    
+    cam.vfov = 20.;
+    cam.lookfrom = Point3::new(26., 3., 6.);
+    cam.lookat = Point3::new(0., 2., 0.);
     cam.vup = Vec3::new(0., 1., 0.);
 
     cam.defocus_angle = 0.0;
@@ -218,6 +258,7 @@ fn main() {
         2 => earth(*image_width, *samples, *depth),
         3 => perlin_spheres(*image_width, *samples, *depth),
         4 => quads(*image_width, *samples, *depth),
+        5 => simple_light(*image_width, *samples, *depth),
         _ => ()
     }
 }

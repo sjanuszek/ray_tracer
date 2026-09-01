@@ -10,6 +10,7 @@ pub struct Camera {
     pub image_width: usize,
     pub samples_per_pixel: usize,
     pub max_depth: usize,
+    pub background: Color,
 
     pub vfov: f64,
     pub lookfrom: Point3,
@@ -68,7 +69,7 @@ impl Camera {
         let mut pixel_color = Color::new(0., 0., 0.);
         for _ in 0..self.samples_per_pixel {
             let r = self.get_ray(i, j);
-            pixel_color += Camera::ray_color(&r, self.max_depth, world);
+            pixel_color += self.ray_color(&r, self.max_depth, world);
         }
         pixel_color * self.pixel_samples_scale
     }
@@ -126,24 +127,27 @@ impl Camera {
         self.center + (p[0] * self.defocus_disk_u) + (p[1] * self.defocus_disk_v)
     }
 
-    fn ray_color(r: &Ray, depth: usize, world: &impl Hittable) -> Color {
+    fn ray_color(&self, r: &Ray, depth: usize, world: &impl Hittable) -> Color {
         if depth <= 0 {
             return Color::new(0., 0., 0.);
         }
 
         let mut rec = HitRecord::default();
 
-        if world.hit(r, Interval::new(0.01, INFINITY), &mut rec) {
+        if world.hit(r, Interval::new(0.001, INFINITY), &mut rec) {
             if let Some(mat) = &rec.mat {
-                if let Some((attenuation, scattered)) = mat.scatter(r, &rec) {
-                    return attenuation * Camera::ray_color(&scattered, depth-1, world);
-                }
-                return Color::new(0., 0., 0.);
-            }
-        }
+                let color_from_emission = mat.emitted(rec.u, rec.v, rec.p);
 
-        let unit_direction = unit_vector(*r.direction());
-        let a = 0.5*(unit_direction.y() + 1.);
-        (1.-a)*Color::new(1., 1., 1.) + a*Color::new(0.5, 0.7, 1.)
+                if let Some((attenuation, scattered)) = mat.scatter(r, &rec) {
+                    let color_from_scatter = attenuation * self.ray_color(&scattered, depth - 1, world);
+
+                    return color_from_emission + color_from_scatter;
+                }
+
+                return color_from_emission;
+            }
+        } 
+
+        self.background
     }
 }
