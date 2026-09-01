@@ -245,6 +245,44 @@ fn simple_light(image_width: usize, samples: usize, max_depth: usize) {
     cam.render(&world);
 }
 
+fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
+    let mut world: HittableList = HittableList::new();
+
+    let red = Arc::new(Lambertian::new_from_color(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new_from_color(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new_from_color(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new_from_color(Color::new(15., 15., 15.)));
+
+    world.add(Quad::new(Point3::new(555., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), green));
+    world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), red));
+    world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light));
+    world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(555., 0., 0.), Vec3::new(0., 0., 555.), white.clone()));
+    world.add(Quad::new(Point3::new(555., 555., 555.), Vec3::new(-555., 0., 0.), Vec3::new(0., 0., -555.), white.clone()));
+    world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white));
+
+    let mut cam = Camera::default();
+
+    world = HittableList::new_from_hittable(BVHNode::new(&mut world));
+
+    cam.aspect_ratio = 1.;
+    cam.image_width = image_width;
+    cam.samples_per_pixel = samples;
+    cam.max_depth = max_depth;
+    cam.background = Color::new(0., 0., 0.);
+    
+    cam.vfov = 40.;
+    cam.lookfrom = Point3::new(278., 278., -800.);
+    cam.lookat = Point3::new(278., 278., 0.);
+    cam.vup = Vec3::new(0., 1., 0.);
+
+    cam.defocus_angle = 0.0;
+    cam.focus_dist = 10.;
+
+    cam.jobs = 8;
+
+    cam.render(&world);
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let scene = &args[1].parse::<usize>().unwrap();
@@ -259,6 +297,7 @@ fn main() {
         3 => perlin_spheres(*image_width, *samples, *depth),
         4 => quads(*image_width, *samples, *depth),
         5 => simple_light(*image_width, *samples, *depth),
+        6 => cornell_box(*image_width, *samples, *depth),
         _ => ()
     }
 }
