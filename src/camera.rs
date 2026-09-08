@@ -24,6 +24,8 @@ pub struct Camera {
 
     image_height: usize,
     pixel_samples_scale: f64,
+    sqrt_spp: usize,
+    recip_sqrt_spp: f64,
     center: Point3,
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
@@ -67,9 +69,11 @@ impl Camera {
 
     fn render_pixel(&self, i: usize, j: usize, world: &impl Hittable) -> Color {
         let mut pixel_color = Color::new(0., 0., 0.);
-        for _ in 0..self.samples_per_pixel {
-            let r = self.get_ray(i, j);
-            pixel_color += self.ray_color(&r, self.max_depth, world);
+        for s_j in 0..self.sqrt_spp {
+            for s_i in 0..self.sqrt_spp {
+                let r = self.get_ray(i, j, s_i, s_j);
+                pixel_color += self.ray_color(&r, self.max_depth, world);
+            }
         }
         pixel_color * self.pixel_samples_scale
     }
@@ -78,7 +82,9 @@ impl Camera {
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as usize;
         self.image_height = self.image_height.max(1);
 
-        self.pixel_samples_scale = 1. / self.samples_per_pixel as f64;
+        self.sqrt_spp = self.samples_per_pixel.isqrt();
+        self.pixel_samples_scale = 1. / (self.sqrt_spp * self.sqrt_spp) as f64;
+        self.recip_sqrt_spp = 1. / self.sqrt_spp as f64;
 
         self.center = self.lookfrom;
 
@@ -105,8 +111,8 @@ impl Camera {
         self.defocus_disk_v = self.v * defocus_radius;
     }
 
-    fn get_ray(&self, i: usize, j: usize) -> Ray {
-        let offset = Camera::sample_square();
+    fn get_ray(&self, i: usize, j: usize, s_i: usize, s_j: usize) -> Ray {
+        let offset = self.sample_square_stratified(s_i, s_j);
         let pixel_sample = self.pixel00_loc
                          + ((i as f64 + offset.x()) * self.pixel_delta_u)
                          + ((j as f64 + offset.y()) * self.pixel_delta_v);
@@ -116,6 +122,13 @@ impl Camera {
         let ray_time = random_double();
 
         Ray::new_with_time(ray_origin, ray_direction, ray_time)
+    }
+
+    fn sample_square_stratified(&self, s_i: usize, s_j: usize) -> Vec3 {
+        let px = ((s_i as f64 + random_double()) * self.recip_sqrt_spp) - 0.5;
+        let py = ((s_j as f64 + random_double()) * self.recip_sqrt_spp) - 0.5;
+
+        Vec3::new(px, py, 0.)
     }
 
     fn sample_square() -> Vec3 {
