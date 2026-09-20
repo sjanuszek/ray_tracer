@@ -1,8 +1,8 @@
-use std::{io::{self, Write}, sync::atomic::{AtomicU64, AtomicUsize, Ordering}};
+use std::{io::{self, Write}, sync::{Arc, atomic::{AtomicU64, AtomicUsize, Ordering}}};
 
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, ray::Ray, utility::{INFINITY, degrees_to_radians, random_double, random_double_range}, vec3::{Point3, Vec3, cross, dot, random_in_unit_disk, random_on_hemisphere, random_unit_vector, unit_vector}};
+use crate::{color::{Color, write_color}, geometry::hittable::{HitRecord, Hittable}, interval::Interval, pdf::{cosine_pdf::CosinePDF, hittable_pdf::HittablePDF, mixture_pdf::MixturePDF, pdf::PDF}, ray::Ray, utility::{INFINITY, degrees_to_radians, random_double, random_double_range}, vec3::{Point3, Vec3, cross, dot, random_in_unit_disk, random_on_hemisphere, random_unit_vector, unit_vector}};
 
 #[derive(Default)]
 pub struct Camera {
@@ -38,7 +38,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn render(&mut self, world: &(impl Hittable + Sync)) {
+    pub fn render(&mut self, world: &(impl Hittable + Sync), lights: &impl Hittable) {
         self.initialize();
 
         let this = &*self;
@@ -54,7 +54,7 @@ impl Camera {
                     eprint!("\rScanlines remaining: {:4} ", remaining);
                 }
 
-                (0..this.image_width).into_par_iter().map(move |i| this.render_pixel(i, j, world))
+                (0..this.image_width).into_par_iter().map(move |i| this.render_pixel(i, j, world, lights))
             })
             .collect();
 
@@ -67,12 +67,12 @@ impl Camera {
         }
     }
 
-    fn render_pixel(&self, i: usize, j: usize, world: &impl Hittable) -> Color {
+    fn render_pixel(&self, i: usize, j: usize, world: &impl Hittable, lights: &impl Hittable) -> Color {
         let mut pixel_color = Color::new(0., 0., 0.);
         for s_j in 0..self.sqrt_spp {
             for s_i in 0..self.sqrt_spp {
                 let r = self.get_ray(i, j, s_i, s_j);
-                pixel_color += self.ray_color(&r, self.max_depth, world);
+                pixel_color += self.ray_color(&r, self.max_depth, world, lights);
             }
         }
         pixel_color * self.pixel_samples_scale
@@ -140,7 +140,7 @@ impl Camera {
         self.center + (p[0] * self.defocus_disk_u) + (p[1] * self.defocus_disk_v)
     }
 
-    fn ray_color(&self, r: &Ray, depth: usize, world: &impl Hittable) -> Color {
+    fn ray_color(&self, r: &Ray, depth: usize, world: &impl Hittable, lights: &impl Hittable) -> Color {
         if depth <= 0 {
             return Color::new(0., 0., 0.);
         }
@@ -152,28 +152,21 @@ impl Camera {
                 let color_from_emission = mat.emitted(r, &rec, rec.u, rec.v, rec.p);
 
                 if let Some((attenuation, mut scattered, mut pdf_value)) = mat.scatter(r, &rec) {
-                    let on_light = Point3::new(random_double_range(213., 343.), 554., random_double_range(227., 332.));
-                    let mut to_light = on_light - rec.p;
-                    let distance_squared = to_light.length_squared();
-                    to_light = unit_vector(to_light);
+                    let p0 = HittablePDF::new(lights, &rec.p);
+                    let p1 = CosinePDF::new(&rec.normal);
+                    let mixed_pdf = MixturePDF::new(&p0, &p1);
 
-                    if dot(to_light, rec.normal) < 0. {
-                        return color_from_emission;
-                    }
-
-                    let light_area = (343. - 213.) * (332. - 227.);
-                    let light_cosine = to_light.y().abs();
-                    
-                    if light_cosine < 0.000001 {
-                        return color_from_emission;
-                    }
-
-                    pdf_value = distance_squared / (light_cosine * light_area);
-                    scattered = Ray::new_with_time(rec.p, to_light, r.time());
+                    scattered = Ray::new_with_time(rec.p, mixed_pdf.generate(), r.time());
+                    pdf_value = mixed_pdf.value(scattered.direction());
 
                     let scattering_pdf = mat.scattering_pdf(r, &rec, &scattered);
 
-                    let color_from_scatter = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world)) / pdf_value;
+                    if pdf_value <= 1e-8 {
+                        return color_from_emission;
+                    }
+
+                    let sample_color = self.ray_color(&scattered, depth-1, world, lights);
+                    let color_from_scatter = (attenuation * scattering_pdf * sample_color) / pdf_value;
 
                     return color_from_emission + color_from_scatter;
                 }

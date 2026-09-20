@@ -9,6 +9,7 @@ mod material;
 mod mapping;
 mod bvh;
 mod onb;
+mod pdf;
 mod rtw_stb_image;
 
 use std::{env, sync::Arc};
@@ -58,6 +59,8 @@ fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
 
     let mut cam = Camera::default();
 
+    let lights = HittableList::new();
+
     world = HittableList::new_from_hittable(BVHNode::new(&mut world));
 
     cam.aspect_ratio = 16. / 9.;
@@ -76,7 +79,7 @@ fn bouncing_spheres(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn checkered_spheres(image_width: usize, samples: usize, max_depth: usize) {
@@ -88,6 +91,8 @@ fn checkered_spheres(image_width: usize, samples: usize, max_depth: usize) {
     world.add(Sphere::new(Point3::new(0., 10., 0.), 10., Arc::new(Lambertian::new_from_texture(checkered))));
 
     let mut cam = Camera::default();
+
+    let lights = HittableList::new();
 
     world = HittableList::new_from_hittable(BVHNode::new(&mut world));
 
@@ -107,7 +112,7 @@ fn checkered_spheres(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn earth(image_width: usize, samples: usize, max_depth: usize) {
@@ -121,6 +126,8 @@ fn earth(image_width: usize, samples: usize, max_depth: usize) {
 
     let mut cam = Camera::default();
 
+    let lights = HittableList::new();
+
     world = HittableList::new_from_hittable(BVHNode::new(&mut world));
 
     cam.aspect_ratio = 16. / 9.;
@@ -139,7 +146,7 @@ fn earth(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
@@ -149,6 +156,8 @@ fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
     let material = Arc::new(Lambertian::new_from_texture(pertext));
     world.add(Sphere::new(Point3::new(0., -1000., 0.), 1000., material.clone()));
     world.add(Sphere::new(Point3::new(0., 2., 0.), 2., material));
+
+    let lights = HittableList::new();
 
     let mut cam = Camera::default();
 
@@ -170,7 +179,7 @@ fn perlin_spheres(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn quads(image_width: usize, samples: usize, max_depth: usize) {
@@ -187,6 +196,8 @@ fn quads(image_width: usize, samples: usize, max_depth: usize) {
     world.add(Quad::new(Point3::new(3., -2., 1.), Vec3::new(0., 0., 4.), Vec3::new(0., 4., 0.), right_blue));
     world.add(Quad::new(Point3::new(-2., 3., 1.), Vec3::new(4., 0., 0.), Vec3::new(0., 0., 4.), upper_orange));
     world.add(Quad::new(Point3::new(-2., -3., 5.), Vec3::new(4., 0., 0.), Vec3::new(0., 0., -4.), lower_teal));
+
+    let lights = HittableList::new();
 
     let mut cam = Camera::default();
 
@@ -208,7 +219,7 @@ fn quads(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn simple_light(image_width: usize, samples: usize, max_depth: usize) {
@@ -222,6 +233,8 @@ fn simple_light(image_width: usize, samples: usize, max_depth: usize) {
     let difflight = Arc::new(DiffuseLight::new_from_color(Color::new(4., 4., 4.)));
     world.add(Sphere::new(Point3::new(0., 7., 0.), 2., difflight.clone()));
     world.add(Quad::new(Point3::new(3., 1., -2.), Vec3::new(2., 0., 0.), Vec3::new(0., 2., 0.), difflight));
+
+    let lights = HittableList::new();
 
     let mut cam = Camera::default();
 
@@ -243,7 +256,7 @@ fn simple_light(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
@@ -256,8 +269,8 @@ fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
 
     world.add(Quad::new(Point3::new(555., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), green));
     world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), red));
-    world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light));
     world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(555., 0., 0.), Vec3::new(0., 0., 555.), white.clone()));
+    world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light.clone()));
     world.add(Quad::new(Point3::new(555., 555., 555.), Vec3::new(-555., 0., 0.), Vec3::new(0., 0., -555.), white.clone()));
     world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white.clone()));
 
@@ -270,6 +283,8 @@ fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
     let box2 = Arc::new(RotateY::new(box2, -18.));
     let box2 = Translate::new(box2, Vec3::new(130., 0., 65.));
     world.add(box2);
+
+    let lights = Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light);
 
     let mut cam = Camera::default();
 
@@ -291,7 +306,7 @@ fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn cornell_smoke(image_width: usize, samples: usize, max_depth: usize) {
@@ -304,7 +319,7 @@ fn cornell_smoke(image_width: usize, samples: usize, max_depth: usize) {
 
     world.add(Quad::new(Point3::new(555., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), green));
     world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(0., 555., 0.), Vec3::new(0., 0., 555.), red));
-    world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light));
+    world.add(Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light.clone()));
     world.add(Quad::new(Point3::new(0., 0., 0.), Vec3::new(555., 0., 0.), Vec3::new(0., 0., 555.), white.clone()));
     world.add(Quad::new(Point3::new(555., 555., 555.), Vec3::new(-555., 0., 0.), Vec3::new(0., 0., -555.), white.clone()));
     world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white.clone()));
@@ -322,6 +337,8 @@ fn cornell_smoke(image_width: usize, samples: usize, max_depth: usize) {
 
     let mut cam = Camera::default();
 
+    let lights = Quad::new(Point3::new(343., 554., 332.), Vec3::new(-130., 0., 0.), Vec3::new(0., 0., -105.), light);
+
     world = HittableList::new_from_hittable(BVHNode::new(&mut world));
 
     cam.aspect_ratio = 1.;
@@ -340,7 +357,7 @@ fn cornell_smoke(image_width: usize, samples: usize, max_depth: usize) {
 
     cam.jobs = 8;
 
-    cam.render(&world);
+    cam.render(&world, &lights);
 }
 
 fn main() {
