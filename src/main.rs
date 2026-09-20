@@ -8,6 +8,7 @@ mod camera;
 mod material;
 mod mapping;
 mod bvh;
+mod onb;
 mod rtw_stb_image;
 
 use std::{env, sync::Arc};

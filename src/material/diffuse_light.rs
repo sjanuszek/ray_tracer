@@ -19,11 +19,14 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord) -> Option<(crate::color::Color, crate::ray::Ray)> {
+    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord) -> Option<(crate::color::Color, crate::ray::Ray, f64)> {
         None
     }
 
-    fn emitted(&self, u: f64, v: f64, p: crate::vec3::Point3) -> Color {
+    fn emitted(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord, u: f64, v: f64, p: crate::vec3::Point3) -> Color {
+        if !rec.front_face {
+            return Color::new(0., 0., 0.);
+        }
         return self.tex.value(u, v, p);
     }
 }

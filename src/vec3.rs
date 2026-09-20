@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub}};
 
-use crate::utility::{random_double, random_double_range};
+use crate::utility::{PI, random_double, random_double_range};
 
 #[derive(Default, Clone, Copy)]
 pub struct Vec3 {
@@ -182,6 +182,18 @@ pub fn random_unit_vector() -> Vec3 {
             return p / lensq.sqrt();
         }
     }
+}
+
+pub fn random_cosine_direction() -> Vec3 {
+    let r1 = random_double();
+    let r2 = random_double();
+
+    let phi = 2.*PI*r1;
+    let x = phi.cos() * r2.sqrt();
+    let y = phi.sin() * r2.sqrt();
+    let z = (1. - r2).sqrt();
+
+    Vec3::new(x, y, z)
 }
 
 pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
