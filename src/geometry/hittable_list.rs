@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use crate::{bvh::aabb::AABB, geometry::hittable::{HitRecord, Hittable}, interval::Interval};
+use rand::{rng, seq::IndexedRandom};
+
+use crate::{bvh::aabb::AABB, geometry::hittable::{HitRecord, Hittable}, interval::Interval, vec3::Vec3};
 
 pub struct HittableList {
     pub objects: Vec<Arc<dyn Hittable>>,
@@ -51,5 +53,23 @@ impl Hittable for HittableList {
 
     fn bounding_box(&self) -> &AABB {
         &self.bbox
+    }
+
+    fn pdf_value(&self, origin: &crate::vec3::Point3, direction: &crate::vec3::Vec3) -> f64 {
+        let weight = 1. / self.objects.len() as f64;
+        let mut sum = 0.;
+
+        for object in &self.objects {
+            sum += weight * object.pdf_value(origin, direction);
+        }
+
+        sum
+    }
+
+    fn random(&self, origin: &crate::vec3::Point3) -> crate::vec3::Vec3 {
+        if let Some(obj) = self.objects.choose(&mut rng()) {
+            return obj.random(origin)
+        }
+        Vec3::default()
     }
 }
