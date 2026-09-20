@@ -274,7 +274,9 @@ fn cornell_box(image_width: usize, samples: usize, max_depth: usize) {
     world.add(Quad::new(Point3::new(555., 555., 555.), Vec3::new(-555., 0., 0.), Vec3::new(0., 0., -555.), white.clone()));
     world.add(Quad::new(Point3::new(0., 0., 555.), Vec3::new(555., 0., 0.), Vec3::new(0., 555., 0.), white.clone()));
 
-    let box1 = Arc::new(quad::quad_box(Point3::new(0., 0., 0.), Point3::new(165., 330., 165.), white.clone()));
+    let aluminium = Arc::new(Metal::new(Color::new(0.8, 0.85, 0.88), 0.));
+    //let box1 = Arc::new(quad::quad_box(Point3::new(0., 0., 0.), Point3::new(165., 330., 165.), white.clone()));
+    let box1 = Arc::new(quad::quad_box(Point3::new(0., 0., 0.), Point3::new(165., 330., 165.), aluminium));
     let box1 = Arc::new(RotateY::new(box1, 15.));
     let box1 = Translate::new(box1, Vec3::new(265., 0., 295.));
     world.add(box1);

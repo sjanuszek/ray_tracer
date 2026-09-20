@@ -15,15 +15,15 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord) -> Option<(Color, crate::ray::Ray, f64)> {
+    fn scatter(&self, r_in: &Ray, rec: &crate::geometry::hittable::HitRecord, srec: &mut super::material::ScatterRecord) -> bool {
         let mut reflected = reflect(r_in.direction(), &rec.normal);
         reflected = unit_vector(reflected) + (self.fuzz * random_unit_vector());
-        let scattered = Ray::new_with_time(rec.p, reflected, r_in.time());
 
-        if dot(*scattered.direction(), rec.normal) > 0. {
-            Some((self.albedo, scattered, 0.))
-        } else {
-            None
-        }
+        srec.attenuation = self.albedo;
+        srec.pdf_ptr = None;
+        srec.skip_pdf = true;
+        srec.skip_pdf_ray = Ray::new_with_time(rec.p, reflected, r_in.time());
+
+        true
     }
 }

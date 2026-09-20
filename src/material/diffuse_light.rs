@@ -19,8 +19,8 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord) -> Option<(crate::color::Color, crate::ray::Ray, f64)> {
-        None
+    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord, srec: &mut super::material::ScatterRecord) -> bool {
+        false
     }
 
     fn emitted(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord, u: f64, v: f64, p: crate::vec3::Point3) -> Color {

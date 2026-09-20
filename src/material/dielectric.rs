@@ -18,7 +18,11 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &crate::ray::Ray, rec: &crate::geometry::hittable::HitRecord) -> Option<(crate::color::Color, crate::ray::Ray, f64)> {
+    fn scatter(&self, r_in: &Ray, rec: &crate::geometry::hittable::HitRecord, srec: &mut super::material::ScatterRecord) -> bool {
+        srec.attenuation = Color::new(1., 1., 1.);
+        srec.pdf_ptr = None;
+        srec.skip_pdf = true;
+
         let ri = if rec.front_face { 1./self.refraction_index } else { self.refraction_index };
 
         let unit_direction = unit_vector(*r_in.direction());
@@ -34,6 +38,7 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, &rec.normal, ri);
         }
 
-        Some((Color::new(1., 1., 1.), Ray::new_with_time(rec.p, direction, r_in.time()), 0.))
+        srec.skip_pdf_ray = Ray::new_with_time(rec.p, direction, r_in.time());
+        true
     }
 }
